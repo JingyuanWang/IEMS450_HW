@@ -21,7 +21,7 @@ class steepest_descent:
 
     method_list = ['constant step length', 'exact line search', 'Nesterov’s optimal method', 'heavy-ball']
 
-    def __init__(self, function, method = 'exact line search', alpha = None):
+    def __init__(self, function, method = 'exact line search', alpha = None, print_every_n_step=10):
         ''' 
         Input:
         - function: must be class objective_function.f, with well defined derivatives
@@ -35,83 +35,124 @@ class steepest_descent:
         self.alpha = alpha
 
         self.f = function
+        self.print_every_n_step = print_every_n_step
 
 
         return
 
     # MAIN function -------------------------------------
-    def run(self, x0, tol = 1e-6, maxiter = 1000):
+    def run(self, x0, tol = 1e-6, maxiter = 500):
 
+        print('======================================')
+        print(f'{self.method}:')
         # initialize: i, x0, first obj, and step related 
         i = 0
         improve = tol+1
         x = x0
-        obj_old = 9999
-        self._init_for_each_method()
+        self.obj = 9999
+        self._init_for_each_method(x0)
 
-        while improve > tol and i <= maxiter:
+        #while improve > tol and i <= maxiter:
+        while self.obj > tol and i <= maxiter:
 
             # calculate obj 
-            obj = self.f.value(x)
-            improve = obj_old - obj
+            obj     = self.f.value(x)
+            improve = self.obj - obj
 
             # print
-            if np.round(i/5) == i/5:
-                print(f'iter {i:4d}: obj = {obj:.2E}, improve = {improve:.6E}')
+            if np.round(i/self.print_every_n_step) == i/self.print_every_n_step:
+                print(f'iter {i:4d}: obj = {obj:.6E}, improve = {improve:.6E}')
 
-            # update 
-            obj_old      = obj
+            # save and update
+            self.obj     = obj
+            self.obj_list= self.obj_list + [obj]
+            self.x       = x
             self.der_1st = self.f.der_1st(x)
 
             p_k     = self._get_step()
-            x_old   = x
-            x       = x_old +  p_k 
-
-            i = i + 1
+            x       = self.x +  p_k 
+            i       = i + 1
 
         print('======================================')
         if i > maxiter:
-            print(f'not converge, last iter {i-1 :4d }: obj = {obj:.2E}, improve = {improve:.6E}')
+            print(f'not converge, last iter {i-1}: obj = {self.obj:.6E}, improve = {improve:.6E}')
         else:
-            print(f'complete iter {i-1 :4d}: obj = {obj_old:.6E}')
+            print(f'complete iter {i-1 :4d}: obj = {self.obj:.6E}')
+        print('======================================')
+        print('\n')
 
-        return x_old 
-
-
-    # auxiliary functions -------------------------------------
-    def _init_for_each_method(self):
-        if self.method == 'heavy-ball':
-            self.p_lastiter = 0
 
         return 
 
+
+    # auxiliary functions -------------------------------------
+    def _init_for_each_method(self, x0):
+
+        self.x  = x0
+        self.obj_list = []
+
+        if self.method == 'Nesterov’s optimal method':
+            self.t    = 1
+            self.y    = self.x
+
+        elif self.method == 'heavy-ball':
+            
+            self.p_lastiter = 0
+
+            L          = self.f.Lipschitz_constant()
+            m          = self.f.min_Hession_eigenvalue()
+            self.alpha = 4/(( np.sqrt(L) + np.sqrt(m) )**2)  
+            self.beta  = ( np.sqrt(L) - np.sqrt(m) )/( np.sqrt(L) + np.sqrt(m) )  
+
+        return
+
     def _get_step(self):
 
-        if self.method == 'constant step length':
-            
+        if self.method == 'constant step length':            
             der_1st    = self.der_1st
-            direction  =  - (1/np.linalg.norm(der_1st) ) * der_1st
-            p_k        = self.alpha * direction
+            #direction  =  - (1/np.linalg.norm(der_1st) ) * der_1st
+            #p_k        = self.alpha * direction
+
+            p_k        = - self.alpha * der_1st
+
 
         elif self.method == 'exact line search':
             der_1st     = self.der_1st
             numerator   = der_1st @ der_1st
             denominator = der_1st @ self.f.A @ der_1st
-
             alpha_k = numerator/denominator
 
             assert isinstance(alpha_k, float) # should not be matrix
-
             p_k     =  - alpha_k  * der_1st
 
-        #elif self.method == 'Nesterov’s optimal method':
+
+        elif self.method == 'Nesterov’s optimal method':
+            # update
+            der_y   = self.f.der_1st(self.y)
+            x_k     = self.y - 1 / self.f.L * der_y
+            p_k     = x_k - self.x
+
+            # calculate for the next iter
+            t_k     = _next_t(self.t)
+            self.y  = x_k  + (self.t-1)/t_k * p_k
+            self.t  = t_k
+
+
+        elif self.method == 'heavy-ball':
+
+            p_k             = - self.alpha * self.der_1st + self.beta * self.p_lastiter
+
+            if np.linalg.norm(p_k) > 1/self.f.L * np.linalg.norm(self.der_1st) :
+                print('step larger than 1/L')
+                p_k             = p_k/2
             
 
-        #elif self.method == 'heavy-ball':
-
-            #self.p_lastiter = p_k 
+            self.p_lastiter = p_k 
         
         return p_k
+
+def _next_t(t):
+    return 0.5 * (1+np.sqrt(1+4* (t**2) ))
 
             
 

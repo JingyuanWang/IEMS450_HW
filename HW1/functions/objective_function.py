@@ -31,6 +31,7 @@ class f:
         
         # 3. calculate the Lipschitz_constant
         self.L = self.Lipschitz_constant()
+        self.m = self.min_Hession_eigenvalue()
 
         return
 
@@ -49,6 +50,10 @@ class f:
     def Lipschitz_constant(self):
         L = self.A.max()
         return L
+
+    def min_Hession_eigenvalue(self):
+        m = self.A.min()
+        return m
 
 
 
