@@ -52,7 +52,7 @@ class f:
         return L
 
     def min_Hession_eigenvalue(self):
-        m = self.A.min()
+        m = self.A.diagonal().min()
         return m
 
 

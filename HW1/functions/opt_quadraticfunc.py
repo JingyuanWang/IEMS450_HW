@@ -21,7 +21,7 @@ class steepest_descent:
 
     method_list = ['constant step length', 'exact line search', 'Nesterov’s optimal method', 'heavy-ball']
 
-    def __init__(self, function, method = 'exact line search', alpha = None, print_every_n_step=10):
+    def __init__(self, function, method = 'exact line search', alpha = None, print_every_n_step= None, print_results=True):
         ''' 
         Input:
         - function: must be class objective_function.f, with well defined derivatives
@@ -36,6 +36,7 @@ class steepest_descent:
 
         self.f = function
         self.print_every_n_step = print_every_n_step
+        self.print_results = print_results
 
 
         return
@@ -43,8 +44,10 @@ class steepest_descent:
     # MAIN function -------------------------------------
     def run(self, x0, tol = 1e-6, maxiter = 500):
 
-        print('======================================')
-        print(f'{self.method}:')
+        if self.print_results:
+            print('======================================')
+            print(f'{self.method}:')
+
         # initialize: i, x0, first obj, and step related 
         i = 0
         improve = tol+1
@@ -60,10 +63,12 @@ class steepest_descent:
             improve = self.obj - obj
 
             # print
-            if np.round(i/self.print_every_n_step) == i/self.print_every_n_step:
-                print(f'iter {i:4d}: obj = {obj:.6E}, improve = {improve:.6E}')
+            if self.print_every_n_step is not None:
+                if np.round(i/self.print_every_n_step) == i/self.print_every_n_step:
+                    print(f'iter {i:4d}: obj = {obj:.6E}, improve = {improve:.6E}')
 
             # save and update
+            self.i       = i
             self.obj     = obj
             self.obj_list= self.obj_list + [obj]
             self.x       = x
@@ -73,14 +78,14 @@ class steepest_descent:
             x       = self.x +  p_k 
             i       = i + 1
 
-        print('======================================')
-        if i > maxiter:
-            print(f'not converge, last iter {i-1}: obj = {self.obj:.6E}, improve = {improve:.6E}')
-        else:
-            print(f'complete iter {i-1 :4d}: obj = {self.obj:.6E}')
-        print('======================================')
-        print('\n')
-
+        if self.print_results:
+            print('======================================')
+            if i > maxiter:
+                print(f'not converge, last iter {self.i}: obj = {self.obj:.6E}, improve = {improve:.6E}')
+            else:
+                print(f'complete iter {self.i :4d}: obj = {self.obj:.6E}')
+            print('======================================')
+            print('\n')
 
         return 
 
@@ -141,12 +146,6 @@ class steepest_descent:
         elif self.method == 'heavy-ball':
 
             p_k             = - self.alpha * self.der_1st + self.beta * self.p_lastiter
-
-            if np.linalg.norm(p_k) > 1/self.f.L * np.linalg.norm(self.der_1st) :
-                print('step larger than 1/L')
-                p_k             = p_k/2
-            
-
             self.p_lastiter = p_k 
         
         return p_k
