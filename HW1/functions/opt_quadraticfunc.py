@@ -42,7 +42,7 @@ class steepest_descent:
         return
 
     # MAIN function -------------------------------------
-    def run(self, x0, tol = 1e-6, maxiter = 500):
+    def run(self, x0, tol = 1e-6, maxiter = 1000):
 
         if self.print_results:
             print('======================================')
