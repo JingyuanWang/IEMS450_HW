@@ -55,11 +55,9 @@ class steepest_descent:
             obj_old      = obj
             self.der_1st = self.f.der_1st(x)
 
-            d_k     = self._get_direction()
-            alpha_k = self._get_steplength()
-
+            p_k     = self._get_step()
             x_old   = x
-            x       = x_old + alpha_k * d_k 
+            x       = x_old +  p_k 
 
             i = i + 1
 
@@ -67,27 +65,27 @@ class steepest_descent:
 
 
     # auxiliary functions -------------------------------------
-    def _get_direction(self):
 
-        der_1st = self.der_1st
-        length = np.linalg.norm(der_1st)
-        direction =  - 1/length * der_1st
-
-        return direction
-
-    def _get_steplength(self):
+    def _get_step(self):
 
         if self.alpha is not None:
-            return self.alpha
+            
+            der_1st    = self.der_1st
+            direction  =  - (1/np.linalg.norm(der_1st) ) * der_1st
+            p_k        = self.alpha * direction
+
         else:
-            der_1st = self.der_1st
+            der_1st     = self.der_1st
             numerator   = der_1st @ der_1st
             denominator = der_1st @ self.f.A @ der_1st
 
             alpha_k = numerator/denominator
 
             assert isinstance(alpha_k, float) # should not be matrix
-            return alpha_k
+
+            p_k     =  - alpha_k  * der_1st
+        
+        return p_k
 
             
 
