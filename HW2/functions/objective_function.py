@@ -82,12 +82,14 @@ class Rosenbrock_function_extended:
         x = x.reshape( (self.n,) )
 
         df_dx = np.zeros( (self.n, 1) )
-        df_dx[i,0] = 1
+        df_dx[0,0] = _df_dx1(x[0], x[1])
 
         for i in range( 1, self.n-1):
-            df_dx[i,0] = 400*(x[0]**3) - 400*x[0]*x[1] + 2*x[0] - 2
+            df_dx2     = _df_dx2(x[i-1], x[i])
+            df_dx1     = _df_dx1(x[i], x[i+1])
+            df_dx[i,0] = df_dx1 + df_dx2
 
-        df_dx[self.n-1,0] =  1
+        df_dx[self.n-1,0] = _df_dx2( x[self.n-2], x[self.n-1]  )
 
         return df_dx
 
@@ -98,5 +100,22 @@ class Rosenbrock_function_extended:
         H = np.zeros( (self.n, self.n) )
         
         return H
+
+
+# ---------------------------------------------------------------------------------
+# functions
+# ---------------------------------------------------------------------------------
+def _df_dx1(x1, x2):
+
+    #df_dx1 = 400*(x1**3) - 400*x1*x2 + 2*x1 - 2
+    df_dx1 = - 200*(x2-x1**2)*2*x1 - 2*(1-x1)
+
+    return df_dx1
+
+def _df_dx2(x1, x2):
+
+    df_dx2 = 200*(x2-x1**2)
+
+    return df_dx2
 
 
