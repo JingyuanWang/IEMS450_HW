@@ -75,7 +75,7 @@ for j in range(10):
 # ---- III. print
 for method in opt_q.steepest_descent.method_list:
     steps = np.array(required_steps[method]).mean()
-    print(f'steepest descent - fixed steps : {steps :4.1f} {method} ')
+    print(f'{method} - fixed steps : {steps :4.1f} ')
 
 
 # Part b: Draw a plot of the convergence behavior on a typical run ===============================================
