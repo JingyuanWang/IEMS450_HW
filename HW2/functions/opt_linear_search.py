@@ -23,7 +23,7 @@ class linesearch:
 
     method_list = ['steepest descent', 'basic Newton’s method', 'BFGS']
 
-    def __init__(self, function, method = 'steepest descent', rho=0.5, c=1e-4, print_every_n_step= None, print_results=True):
+    def __init__(self, function, method = 'steepest descent', rho=0.5, c=1e-4, print_every_n_step= False, print_results=True):
         ''' 
         Input:
         - function: must be class objective_function.f, with well defined derivatives
@@ -47,7 +47,7 @@ class linesearch:
 
         return
 
-    def run(self, x0, tol=1e-5, maxiter=500, print_every_n_step= None):
+    def run(self, x0, tol=1e-6, maxiter=500, print_every_n_step= None, print_results=None):
         '''main function of the algorithm'''
 
         # 0. initialize ----------------------------------------------------------
@@ -57,11 +57,14 @@ class linesearch:
             x0 = x0.reshape( (self.n,1) )
         if print_every_n_step is not None:
             self.print_every_n_step = print_every_n_step
-        print('===========================================')
-        print(self.method)
-        print('-------------------------------------------')
+        if print_results is not None:
+            self.print_results = print_results
 
         # 1. initialize: i, x0, first obj, and step related -----------------------
+        if self.print_results:
+            print('===========================================')
+            print(self.method)
+            print('-------------------------------------------')
         self.i  = 0
         self.x = x0
         self.obj = self.f.value(x0)
@@ -74,7 +77,7 @@ class linesearch:
             self.H                = np.linalg.inv( self.f.der_2nd(self.x) )
             self.I                = np.eye( max(x0.shape) )
 
-        if self.print_every_n_step is not None:
+        if self.print_every_n_step is not False:
             self._print_first_iter()
 
         
@@ -105,7 +108,7 @@ class linesearch:
             assert p_k.shape == (self.n,1)
 
             # C print
-            if self.print_every_n_step is not None:
+            if self.print_every_n_step is not False:
                 if np.round(self.i/self.print_every_n_step) == self.i/self.print_every_n_step:
                     self._print_each_iter(p_k, alpha_k, n_evaluation)
 

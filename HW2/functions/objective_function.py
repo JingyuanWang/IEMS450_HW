@@ -98,6 +98,19 @@ class Rosenbrock_function_extended:
         x = x.reshape( (self.n,) )
 
         H = np.zeros( (self.n, self.n) )
+
+        for i in range(self.n-1):
+
+            # get Hession for this element (2-by-2)
+            x1 = x[i]
+            x2 = x[i+1]
+            element_11 = _d2f_dx1dx1(x1, x2)
+            element_12 = _d2f_dx1dx2(x1, x2)
+            element_21 = _d2f_dx2dx1(x1, x2)
+            element_22 = _d2f_dx2dx2(x1, x2)
+            mat = np.array( [  [element_11, element_12], [element_21, element_22] ] )
+
+            H[i:i+2, i:i+2] = H[i:i+2, i:i+2] + mat
         
         return H
 
@@ -117,5 +130,20 @@ def _df_dx2(x1, x2):
     df_dx2 = 200*(x2-x1**2)
 
     return df_dx2
+
+# about Hessian
+def _d2f_dx1dx1(x1, x2):
+    return 1200*(x1**2) - 400*x2 + 2
+
+
+def _d2f_dx1dx2(x1, x2):
+    return -400*x1
+
+def _d2f_dx2dx1(x1, x2):
+    return -400*x1
+
+def _d2f_dx2dx2(x1, x2):
+    return 200
+
 
 
