@@ -115,6 +115,17 @@ class m:
 
         return values.reshape( (n,n) )
 
+    def der_1st(self, d):
+
+        assert d.shape == (self.n ,) or d.shape == (self.n,1)
+        d = d.reshape( (self.n,1) )
+
+        return (self.der_x0 +  self.H_x0 @ d).squeeze()
+
+    def der_2nd(self, d=None):
+
+        return self.H_x0
+
 
 
 
