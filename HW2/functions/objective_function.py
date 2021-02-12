@@ -32,7 +32,7 @@ class Rosenbrock_function:
 
         value = 100 * (x[1] - x[0]**2)**2 + (1-x[0])**2 
 
-        if not isinstance(value, float):
+        if not (isinstance(value, float) or isinstance(value, int)):
             value = value[0]
 
         return value
@@ -74,7 +74,7 @@ class Rosenbrock_function_extended:
         for i in range(self.n-1):
             value = value + 100 * (x[i+1] - x[i]**2)**2 + (1-x[i])**2 
 
-        if not isinstance(value, float):
+        if not (isinstance(value, float) or isinstance(value, int)):
             value = value[0]
         return value
         
