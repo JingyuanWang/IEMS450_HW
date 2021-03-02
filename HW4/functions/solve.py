@@ -116,42 +116,43 @@ class active_set:
         self.i          = 0
         self.x          = x0
         lambdas         = -999
+        p               = np.ones( (2, ))
         assert len(list(np.where(self.A@x0 -self.b > 0)[0])) == 0, 'not feasible, please change an initial value'
         self.list_active_constraints = list(np.where(self.A@x0 - self.b == 0)[0])
         if print_every_n_step:
             self._print_first_iter()
         
         # 2. start the iterations -------------------------------------------------
-        while np.min(lambdas) < 0  and self.i <= maxiter:
+        while (np.min(lambdas) < 0  or np.linalg.norm(p) > 0) and self.i <= maxiter:
 
             # A. find the next step, and calculate the objective function at the next x
             # (1) find the next step
-            p = self.get_direction() 
+            p = self.get_direction()
+
+            # for print:
+            alpha = 0
+            if np.linalg.norm(p) != 0:
+                alpha = self.get_steplength(p)
+            lambdas = self.get_lambdas()
+
+            # print 
+            if print_every_n_step is not False:
+                if np.round(self.i/print_every_n_step) == self.i/print_every_n_step:
+                    self._print_each_iter(p, alpha, lambdas)
 
             # (2) update constraint 
             if np.linalg.norm(p)==0:
-                lambdas = self.get_lambdas()
-
                 min_val = np.min(lambdas)
                 if min_val < 0:
                     i = np.where(lambdas==min_val)[0][0]
                     self.list_active_constraints.remove(i)
 
-                # for print:
-                alpha = 0
             # (2) update x
             else:
-                # step length 
-                alpha = self.get_steplength(p)
                 # update
                 self.x = self.x + alpha * p
                 self.list_active_constraints = list(np.where(self.A@self.x - self.b >= -1e-10)[0])
                 self.list_active_constraints.sort()
-
-            # B. print
-            if print_every_n_step is not False:
-                if np.round(self.i/print_every_n_step) == self.i/print_every_n_step:
-                    self._print_each_iter(p, alpha)
 
             self.i = self.i + 1
 
@@ -229,32 +230,31 @@ class active_set:
 
 
     def _print_first_iter(self):
+        #np.set_printoptions(precision=2,suppress=True)
+        np.set_printoptions(formatter={'float': '{: 0.2f}'.format})
+
+
         print(' iter ' 
-            + '           f ' 
-            + '      x '
+            + '         f ' 
+            + '           x   '
             + '    Active C   ' 
-            + ' p_(k-1) ' 
-            + ' alpha_(k-1)'
+            + '      lambdas      ' 
+            + '      p_(k)    ' 
+            + '   alpha_(k)'
             )
-
-        obj = self.f.value(self.x)
-
-        print(f'{self.i:4d}  '
-            + f'   {obj:.4E} ' 
-            + f'   {self.x}' 
-            + f'   {self.list_active_constraints}   ' )
 
         return 
 
-    def _print_each_iter(self, p_k, alpha):
+    def _print_each_iter(self, p_k, alpha, lambdas):
 
         step_norm        = np.linalg.norm(p_k)
         obj = self.f.value(self.x)
 
         print(f'{self.i:4d}  '
-            + f'   {obj:.4E} ' 
-            + f'   {self.x}' 
-            + f'   {self.list_active_constraints}   ' 
+            + f'   {obj:.2E} ' 
+            + f'  {self.x}' 
+            + f'   {self.list_active_constraints}   '
+            + f'   {lambdas}  ' 
             + f'   {p_k}' 
             + f'   {alpha:.2E}' 
             )
