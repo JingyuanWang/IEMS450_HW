@@ -196,7 +196,6 @@ def CG_direction(A, b, delta, tol):
         i_inner      = i_inner + 1
 
     p = z 
-    assert (p != np.zeros( (d.shape[0],1) )).all()
 
     return p, i_inner
 
@@ -206,14 +205,12 @@ def _p(z, d, delta):
     b = float(2 * z.T @ d )
     c = np.linalg.norm(z)**2 - delta**2
 
-    D1=b**2-4*a*c
     D = np.sqrt(b**2-4*a*c)
     tau1 = (-b+D) / (2*a)
     tau2 = (-b-D) / (2*a)
     assert tau2 < 0 and tau1 > 0
 
-    p = z + tau1 * d
-    assert (p != np.zeros( (d.shape[0],1) )).all()
+    p = z + tau1 * d   # must be in the same direction as d
 
     return p 
 
