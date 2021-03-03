@@ -110,6 +110,7 @@ class active_set:
         # 0. initialize ----------------------------------------------------------
         # check the shape of x0
         assert x0.shape == (2,) or x0.shape == (2,1)
+        tol             = 1e-10
 
         # 1. initialize: i, x0, first obj, and step related -----------------------
         # initialize
@@ -123,9 +124,8 @@ class active_set:
             self._print_first_iter()
         
         # 2. start the iterations -------------------------------------------------
-        while (np.min(lambdas) < 0  or np.linalg.norm(p) > 0) and self.i <= maxiter:
+        while (np.min(lambdas) < 0  or np.linalg.norm(p) > tol) and self.i <= maxiter:
 
-            # A. find the next step, and calculate the objective function at the next x
             # (1) find the next step
             p = self.get_direction()
 
@@ -133,7 +133,8 @@ class active_set:
             alpha = 0
             if np.linalg.norm(p) != 0:
                 alpha = self.get_steplength(p)
-            lambdas = self.get_lambdas()
+            lambdas = self.get_lambdas()   # this is unnecessary for all cases, can be moved under if np.linalg.norm(p)==0. 
+                                           # calculate for all cases just for printing purpose
 
             # print 
             if print_every_n_step is not False:
@@ -147,11 +148,10 @@ class active_set:
                     i = np.where(lambdas==min_val)[0][0]
                     self.list_active_constraints.remove(i)
 
-            # (2) update x
+            # (3) update x
             else:
-                # update
                 self.x = self.x + alpha * p
-                self.list_active_constraints = list(np.where(self.A@self.x - self.b >= -1e-10)[0])
+                self.list_active_constraints = list(np.where(self.A@self.x - self.b >= -tol)[0])
                 self.list_active_constraints.sort()
 
             self.i = self.i + 1
@@ -172,6 +172,7 @@ class active_set:
         elif len(self.list_active_constraints ) == 1 :
             # 1 constraint, can go along the null space vector, + or -
 
+            # Hey francisco, the professor says we need to do QR decomposition in order to find the direction to go? Just want to confirm with you that is the way to get p
             A = self.A[ self.list_active_constraints, : ]
             A = np.hstack( (A.T ,np.zeros( (2,1) )) )
             Q, R = np.linalg.qr(A)
@@ -183,6 +184,7 @@ class active_set:
             alpha = - float(der_1st@p / ( p@self.f.G@p ) )
 
             p = alpha * p
+            # now p is argmin of the local problem
 
         else:
             assert len(self.list_active_constraints ) == 0
@@ -218,8 +220,12 @@ class active_set:
             g = self.f.der_1st(self.x)
             lambdas[self.list_active_constraints] = np.linalg.solve(A.T, -g)
         elif len(self.list_active_constraints) == 1:
+
+            # Hey Francisco, here is the skeptical part. I don't know why this system with 2 equations (for 2 dim x1 and x2) and 1 unknown lambda could have a solution
+            # Won't there be cases that we can not solve for a lambda?
             A = self.A[ self.list_active_constraints, : ].flatten()
             g = self.f.der_1st(self.x)
+            # solve: A * lambda = g
 
             if g[0] != 0:
                 lambdas[self.list_active_constraints] = -A[0]/g[0]
