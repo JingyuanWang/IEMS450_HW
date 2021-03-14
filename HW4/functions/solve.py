@@ -172,7 +172,6 @@ class active_set:
         elif len(self.list_active_constraints ) == 1 :
             # 1 constraint, can go along the null space vector, + or -
 
-            # Hey francisco, the professor says we need to do QR decomposition in order to find the direction to go? Just want to confirm with you that is the way to get p
             A = self.A[ self.list_active_constraints, : ]
             A = np.hstack( (A.T ,np.zeros( (2,1) )) )
             Q, R = np.linalg.qr(A)
@@ -221,8 +220,6 @@ class active_set:
             lambdas[self.list_active_constraints] = np.linalg.solve(A.T, -g)
         elif len(self.list_active_constraints) == 1:
 
-            # Hey Francisco, here is the skeptical part. I don't know why this system with 2 equations (for 2 dim x1 and x2) and 1 unknown lambda could have a solution
-            # Won't there be cases that we can not solve for a lambda?
             A = self.A[ self.list_active_constraints, : ].flatten()
             g = self.f.der_1st(self.x)
             # solve: A * lambda = g
